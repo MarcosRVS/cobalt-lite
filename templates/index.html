@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cobalt Lite — Descargador Privado</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236366f1'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+            },
+            darkBg: '#0b0c10',
+            cardBg: '#13151b',
+            borderSubtle: '#222634',
+            surfaceMuted: '#1a1d26'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0b0c10;
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    .glow-focus:focus-within {
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4), 0 0 25px rgba(99, 102, 241, 0.2);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #2a2e3d;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+
+  <!-- Top Header -->
+  <header class="w-full max-w-4xl mx-auto px-6 py-6 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+        <i data-lucide="download" class="w-5 h-5 text-white"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+          cobalt <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 font-mono border border-indigo-500/20">private</span>
+        </h1>
+        <p class="text-xs text-zinc-500">Servidor propio &middot; Sin publicidad</p>
+      </div>
+    </div>
+
+    <!-- Top Right Actions -->
+    <div class="flex items-center gap-2">
+      <!-- Status Indicator Pill -->
+      <button onclick="toggleServerModal()" id="statusPill" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-cardBg border border-borderSubtle text-xs text-zinc-400 hover:text-zinc-200 transition">
+        <span class="w-2 h-2 rounded-full bg-amber-400" id="statusDot"></span>
+        <span id="statusText">Verificando...</span>
+      </button>
+
+      <!-- Key/Auth Button -->
+      <button onclick="toggleAuthModal()" class="p-2 rounded-lg bg-cardBg border border-borderSubtle text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 transition" title="Configurar clave privada">
+        <i data-lucide="key" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="w-full max-w-3xl mx-auto px-6 py-8 flex flex-col items-center">
+
+    <!-- Hero / Headline -->
+    <div class="text-center mb-8">
+      <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-2">
+        Pega un enlace y descarga
+      </h2>
+      <p class="text-sm text-zinc-400">
+        Descarga audio o video de YouTube de forma limpia directamente a tu dispositivo.
+      </p>
+    </div>
+
+    <!-- Primary Input Card (Cobalt Style) -->
+    <div class="w-full bg-cardBg border border-borderSubtle rounded-2xl p-3 shadow-2xl transition-all duration-300 glow-focus">
+      
+      <!-- Input Row -->
+      <div class="relative flex items-center">
+        <div class="absolute left-4 text-zinc-500 pointer-events-none">
+          <i data-lucide="link-2" class="w-5 h-5"></i>
+        </div>
+        
+        <input 
+          type="url" 
+          id="urlInput"
+          placeholder="Pega la URL de YouTube aquí..."
+          class="w-full bg-transparent pl-12 pr-28 py-4 text-base md:text-lg text-white placeholder-zinc-500 focus:outline-none"
+          autocomplete="off"
+          spellcheck="false"
+        >
+
+        <!-- Action / Paste / Submit Button -->
+        <div class="absolute right-2 flex items-center gap-1.5">
+          <button 
+            type="button" 
+            onclick="pasteFromClipboard()" 
+            class="hidden md:flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-surfaceMuted hover:bg-zinc-700/60 text-xs text-zinc-400 hover:text-zinc-200 transition border border-zinc-800"
+            title="Pegar del portapapeles"
+          >
+            <i data-lucide="clipboard" class="w-3.5 h-3.5"></i>
+            <span>Pegar</span>
+          </button>
+          
+          <button 
+            type="button" 
+            id="mainActionBtn"
+            onclick="handleDownload()" 
+            class="w-12 h-12 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white flex items-center justify-center transition shadow-lg shadow-indigo-600/30"
+            title="Descargar"
+          >
+            <i data-lucide="arrow-right" class="w-5 h-5" id="btnIcon"></i>
+            <div id="btnSpinner" class="hidden w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Settings / Options Row -->
+      <div class="mt-3 pt-3 border-t border-borderSubtle/60 flex flex-wrap items-center justify-between gap-3 text-xs px-2">
+        
+        <!-- Mode Switcher (Audio / Video) -->
+        <div class="flex items-center bg-surfaceMuted p-1 rounded-xl border border-borderSubtle">
+          <button 
+            type="button" 
+            onclick="setMode('video')" 
+            id="modeVideoBtn" 
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition bg-indigo-600 text-white shadow-sm"
+          >
+            <i data-lucide="video" class="w-3.5 h-3.5"></i>
+            <span>Video</span>
+          </button>
+          
+          <button 
+            type="button" 
+            onclick="setMode('audio')" 
+            id="modeAudioBtn" 
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-zinc-400 hover:text-zinc-200 transition"
+          >
+            <i data-lucide="music" class="w-3.5 h-3.5"></i>
+            <span>Solo Audio</span>
+          </button>
+        </div>
+
+        <!-- Format & Quality Pickers -->
+        <div class="flex items-center gap-2">
+          
+          <!-- Video Quality Picker -->
+          <div id="videoOptions" class="flex items-center gap-1.5">
+            <span class="text-zinc-500">Calidad:</span>
+            <select id="videoQuality" class="bg-surfaceMuted text-zinc-300 border border-borderSubtle rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer">
+              <option value="auto">Mejor posible</option>
+              <option value="1080">1080p</option>
+              <option value="720" selected>720p (HD directo)</option>
+              <option value="480">480p</option>
+            </select>
+          </div>
+
+          <!-- Audio Format Picker -->
+          <div id="audioOptions" class="hidden items-center gap-1.5">
+            <span class="text-zinc-500">Formato:</span>
+            <select id="audioFormat" class="bg-surfaceMuted text-zinc-300 border border-borderSubtle rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer">
+              <option value="mp3" selected>MP3 (192 kbps)</option>
+              <option value="m4a">M4A (AAC)</option>
+              <option value="opus">Opus</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Dynamic Status / Preview Card -->
+    <div id="previewCard" class="hidden w-full mt-6 bg-cardBg border border-borderSubtle rounded-2xl p-4 transition-all">
+      <div class="flex flex-col sm:flex-row gap-4 items-center">
+        <img id="prevThumb" src="" alt="Thumbnail" class="w-full sm:w-40 h-24 object-cover rounded-xl bg-surfaceMuted border border-borderSubtle">
+        <div class="flex-1 min-w-0 text-center sm:text-left">
+          <h3 id="prevTitle" class="text-sm font-semibold text-white truncate mb-1">Título del video</h3>
+          <p id="prevUploader" class="text-xs text-zinc-400 mb-2">Canal</p>
+          <div class="flex items-center justify-center sm:justify-start gap-3 text-xs text-zinc-500">
+            <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5"></i> <span id="prevDuration">--:--</span></span>
+            <span id="prevStatusBadge" class="text-indigo-400 font-medium">Procesando...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Box -->
+    <div id="errorAlert" class="hidden w-full mt-6 p-4 rounded-xl bg-red-950/40 border border-red-800/60 text-red-200 text-sm flex items-start gap-3">
+      <i data-lucide="alert-circle" class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5"></i>
+      <div class="flex-1">
+        <h4 class="font-semibold text-red-300 mb-1" id="errorTitle">Ocurrió un error</h4>
+        <p class="text-xs text-red-200/80 leading-relaxed" id="errorDetails"></p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full max-w-4xl mx-auto px-6 py-6 text-center text-xs text-zinc-600">
+    <p>Cobalt Lite &middot; Descargas privadas y directas</p>
+  </footer>
+
+  <!-- Modal: Diagnostics & Server Status -->
+  <div id="serverModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-cardBg border border-borderSubtle rounded-2xl w-full max-w-md p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4 pb-3 border-b border-borderSubtle">
+        <h3 class="font-bold text-base text-white flex items-center gap-2">
+          <i data-lucide="server" class="w-4 h-4 text-indigo-400"></i> Estado del Servidor
+        </h3>
+        <button onclick="toggleServerModal()" class="text-zinc-500 hover:text-zinc-200">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs" id="serverInfoList">
+        <div class="flex justify-between items-center p-2.5 rounded-lg bg-surfaceMuted">
+          <span class="text-zinc-400">Versión yt-dlp</span>
+          <span id="diagYtdlp" class="font-mono text-zinc-200">Cargando...</span>
+        </div>
+        <div class="flex justify-between items-center p-2.5 rounded-lg bg-surfaceMuted">
+          <span class="text-zinc-400">FFmpeg (MP3 y 1080p)</span>
+          <span id="diagFfmpeg" class="font-mono">Cargando...</span>
+        </div>
+        <div class="flex justify-between items-center p-2.5 rounded-lg bg-surfaceMuted">
+          <span class="text-zinc-400">Cookies de YouTube</span>
+          <span id="diagCookies" class="font-mono">Cargando...</span>
+        </div>
+        <div class="flex justify-between items-center p-2.5 rounded-lg bg-surfaceMuted">
+          <span class="text-zinc-400">Clave de Acceso</span>
+          <span id="diagAuth" class="font-mono">Cargando...</span>
+        </div>
+      </div>
+
+      <div class="mt-5 text-right">
+        <button onclick="toggleServerModal()" class="px-4 py-2 bg-surfaceMuted hover:bg-zinc-700 text-zinc-200 rounded-xl text-xs font-medium transition">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Private Key Auth -->
+  <div id="authModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-cardBg border border-borderSubtle rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4 pb-3 border-b border-borderSubtle">
+        <h3 class="font-bold text-base text-white flex items-center gap-2">
+          <i data-lucide="lock" class="w-4 h-4 text-indigo-400"></i> Acceso Privado
+        </h3>
+        <button onclick="toggleAuthModal()" class="text-zinc-500 hover:text-zinc-200">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-zinc-400 mb-4">
+        Si configuraste una clave en <code>config.json</code>, ingrésala aquí. Se guardará localmente en tu navegador.
+      </p>
+
+      <div class="space-y-3">
+        <input 
+          type="password" 
+          id="secretKeyInput" 
+          placeholder="Clave de acceso..."
+          class="w-full bg-surfaceMuted border border-borderSubtle rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+        >
+        <button 
+          onclick="saveAuthKey()" 
+          class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/30 transition"
+        >
+          Guardar Clave
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client Script -->
+  <script>
+    let currentMode = 'video';
+    let serverConfig = {};
+
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      fetchStatus();
+      
+      const savedKey = localStorage.getItem('cobalt_access_key');
+      if (savedKey) {
+        document.getElementById('secretKeyInput').value = savedKey;
+      }
+
+      document.getElementById('urlInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          handleDownload();
+        }
+      });
+    });
+
+    function setMode(mode) {
+      currentMode = mode;
+      const vBtn = document.getElementById('modeVideoBtn');
+      const aBtn = document.getElementById('modeAudioBtn');
+      const vOpts = document.getElementById('videoOptions');
+      const aOpts = document.getElementById('audioOptions');
+
+      if (mode === 'video') {
+        vBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition bg-indigo-600 text-white shadow-sm";
+        aBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-zinc-400 hover:text-zinc-200 transition";
+        vOpts.classList.remove('hidden');
+        aOpts.classList.add('hidden');
+      } else {
+        aBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition bg-indigo-600 text-white shadow-sm";
+        vBtn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium text-zinc-400 hover:text-zinc-200 transition";
+        aOpts.classList.remove('hidden');
+        aOpts.classList.add('flex');
+        vOpts.classList.add('hidden');
+      }
+    }
+
+    async function pasteFromClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          document.getElementById('urlInput').value = text;
+        }
+      } catch (err) {
+        console.warn('Clipboard access denied');
+      }
+    }
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        serverConfig = data;
+
+        const dot = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+
+        if (data.status === 'ok') {
+          dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+          text.textContent = data.has_ffmpeg ? "En línea (Full)" : "En línea (Básico)";
+        }
+
+        document.getElementById('diagYtdlp').textContent = data.yt_dlp_version || 'N/A';
+        
+        const ffmpegEl = document.getElementById('diagFfmpeg');
+        ffmpegEl.textContent = data.has_ffmpeg ? "Activo" : "No detectado";
+        ffmpegEl.className = data.has_ffmpeg ? "font-mono text-emerald-400" : "font-mono text-amber-400";
+
+        const cookiesEl = document.getElementById('diagCookies');
+        cookiesEl.textContent = data.has_cookies ? "Activas" : "No configuradas";
+        cookiesEl.className = data.has_cookies ? "font-mono text-emerald-400" : "font-mono text-zinc-400";
+
+        const authEl = document.getElementById('diagAuth');
+        authEl.textContent = data.requires_auth ? "Protegido con clave" : "Público (sin clave)";
+        authEl.className = data.requires_auth ? "font-mono text-indigo-400" : "font-mono text-zinc-400";
+
+      } catch (e) {
+        document.getElementById('statusDot').className = "w-2 h-2 rounded-full bg-red-500";
+        document.getElementById('statusText').textContent = "Desconectado";
+      }
+    }
+
+    function toggleServerModal() {
+      document.getElementById('serverModal').classList.toggle('hidden');
+    }
+
+    function toggleAuthModal() {
+      document.getElementById('authModal').classList.toggle('hidden');
+    }
+
+    function saveAuthKey() {
+      const key = document.getElementById('secretKeyInput').value.trim();
+      if (key) {
+        localStorage.setItem('cobalt_access_key', key);
+      } else {
+        localStorage.removeItem('cobalt_access_key');
+      }
+      toggleAuthModal();
+      showToast("Clave guardada");
+    }
+
+    function hideErrors() {
+      document.getElementById('errorAlert').classList.add('hidden');
+    }
+
+    function showError(title, msg) {
+      document.getElementById('errorTitle').textContent = title;
+      document.getElementById('errorDetails').textContent = msg;
+      document.getElementById('errorAlert').classList.remove('hidden');
+    }
+
+    function setButtonLoading(loading) {
+      const btn = document.getElementById('mainActionBtn');
+      const icon = document.getElementById('btnIcon');
+      const spinner = document.getElementById('btnSpinner');
+
+      if (loading) {
+        btn.disabled = true;
+        btn.classList.add('opacity-80');
+        icon.classList.add('hidden');
+        spinner.classList.remove('hidden');
+      } else {
+        btn.disabled = false;
+        btn.classList.remove('opacity-80');
+        icon.classList.remove('hidden');
+        spinner.classList.add('hidden');
+      }
+    }
+
+    async function handleDownload() {
+      hideErrors();
+      const url = document.getElementById('urlInput').value.trim();
+      if (!url) {
+        showError("URL vacía", "Por favor ingresa un enlace de YouTube válido.");
+        return;
+      }
+
+      const key = localStorage.getItem('cobalt_access_key') || "";
+      const videoQuality = document.getElementById('videoQuality').value;
+      const audioFormat = document.getElementById('audioFormat').value;
+
+      setButtonLoading(true);
+
+      const previewCard = document.getElementById('previewCard');
+      const prevThumb = document.getElementById('prevThumb');
+      const prevTitle = document.getElementById('prevTitle');
+      const prevUploader = document.getElementById('prevUploader');
+      const prevDuration = document.getElementById('prevDuration');
+      const prevStatusBadge = document.getElementById('prevStatusBadge');
+
+      // 1. Obtener Info
+      try {
+        const infoRes = await fetch('/api/info', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Access-Key': key
+          },
+          body: JSON.stringify({ url, key })
+        });
+
+        const infoData = await infoRes.json();
+        if (!infoRes.ok) {
+          showError("Error al analizar enlace", infoData.error || "No se pudo obtener información del video");
+          setButtonLoading(false);
+          return;
+        }
+
+        prevThumb.src = infoData.thumbnail || '';
+        prevTitle.textContent = infoData.title || 'Video';
+        prevUploader.textContent = infoData.uploader || 'YouTube';
+        prevDuration.textContent = infoData.duration || '--:--';
+        prevStatusBadge.textContent = "Descargando y procesando...";
+        prevStatusBadge.className = "text-indigo-400 font-medium";
+        previewCard.classList.remove('hidden');
+
+      } catch (err) {
+        console.warn("Info warning:", err);
+      }
+
+      // 2. Descargar
+      try {
+        const dlRes = await fetch('/api/download', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Access-Key': key
+          },
+          body: JSON.stringify({
+            url,
+            mode: currentMode,
+            video_quality: videoQuality,
+            audio_format: audioFormat,
+            key
+          })
+        });
+
+        const dlData = await dlRes.json();
+        if (!dlRes.ok) {
+          showError("Fallo en la descarga", dlData.error || "Error al procesar el archivo.");
+          prevStatusBadge.textContent = "Error";
+          prevStatusBadge.className = "text-red-400 font-medium";
+          setButtonLoading(false);
+          return;
+        }
+
+        prevStatusBadge.textContent = "¡Completado! Descargando...";
+        prevStatusBadge.className = "text-emerald-400 font-medium";
+
+        const downloadLink = document.createElement('a');
+        downloadLink.href = `/api/fetch/${encodeURIComponent(dlData.file_id)}`;
+        downloadLink.download = dlData.filename;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
+
+      } catch (err) {
+        showError("Error de Red", "No se pudo conectar con el servidor.");
+      } finally {
+        setButtonLoading(false);
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.createElement('div');
+      toast.className = "fixed bottom-6 right-6 bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs shadow-xl z-50 transition-opacity duration-300";
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+  </script>
+</body>
+</html>
