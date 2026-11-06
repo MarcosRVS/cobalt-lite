@@ -35,7 +35,17 @@ def load_config():
             json.dump(default_config, f, indent=4)
     return default_config
 
+def check_env_cookies():
+    env_cookies = os.environ.get("YOUTUBE_COOKIES", "").strip()
+    if env_cookies and len(env_cookies) > 20:
+        try:
+            with open(COOKIES_FILE, "w", encoding="utf-8") as f:
+                f.write(env_cookies)
+        except Exception:
+            pass
+
 def has_valid_cookies():
+    check_env_cookies()
     if not COOKIES_FILE.exists():
         return False
     try:
