@@ -133,7 +133,12 @@ def get_info():
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
-        "extract_flat": False
+        "extract_flat": False,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "ios", "mweb", "web"]
+            }
+        },
     }
 
     if has_valid_cookies():
@@ -200,6 +205,11 @@ def download_media():
         "quiet": True,
         "no_warnings": True,
         "restrictfilenames": True,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "ios", "mweb", "web"]
+            }
+        },
     }
 
     if has_valid_cookies():
