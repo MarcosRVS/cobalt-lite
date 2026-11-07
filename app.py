@@ -144,11 +144,7 @@ def get_info():
         "no_warnings": True,
         "skip_download": True,
         "extract_flat": False,
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["android", "ios", "mweb", "web"]
-            }
-        },
+        "js_runtimes": {"node": {}},
     }
 
     if has_valid_cookies():
@@ -215,11 +211,7 @@ def download_media():
         "quiet": True,
         "no_warnings": True,
         "restrictfilenames": True,
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["android", "ios", "mweb", "web"]
-            }
-        },
+        "js_runtimes": {"node": {}},
     }
 
     if has_valid_cookies():
@@ -229,42 +221,38 @@ def download_media():
         ydl_opts["ffmpeg_location"] = str(Path(ffmpeg_path).parent)
 
     if mode == "audio":
+        ydl_opts["format"] = "bestaudio/best"
         if ffmpeg_path and audio_format == "mp3":
-            ydl_opts["format"] = "bestaudio/best"
             ydl_opts["postprocessors"] = [{
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": "mp3",
                 "preferredquality": "192",
             }]
         elif ffmpeg_path and audio_format == "opus":
-            ydl_opts["format"] = "bestaudio/best"
             ydl_opts["postprocessors"] = [{
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": "opus",
             }]
-        else:
-            # m4a nativo sin recodificación
-            ydl_opts["format"] = "bestaudio[ext=m4a]/bestaudio/best"
     else:
         # Modo video
         if ffmpeg_path:
             if video_quality == "1080":
-                ydl_opts["format"] = "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=1080]+bestaudio/best[height<=1080]"
+                ydl_opts["format"] = "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best"
             elif video_quality == "720":
-                ydl_opts["format"] = "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=720]+bestaudio/best[height<=720]"
+                ydl_opts["format"] = "bestvideo[height<=720]+bestaudio/best[height<=720]/best"
             elif video_quality == "480":
-                ydl_opts["format"] = "bestvideo[height<=480]+bestaudio/best[height<=480]"
+                ydl_opts["format"] = "bestvideo[height<=480]+bestaudio/best[height<=480]/best"
             else:
-                ydl_opts["format"] = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best"
+                ydl_opts["format"] = "bestvideo+bestaudio/best"
             ydl_opts["merge_output_format"] = "mp4"
         else:
             # Flujos progresivos
             if video_quality == "720":
-                ydl_opts["format"] = "best[height<=720][ext=mp4]/best[ext=mp4]/best"
+                ydl_opts["format"] = "best[height<=720]/best"
             elif video_quality == "480":
-                ydl_opts["format"] = "best[height<=480][ext=mp4]/best[ext=mp4]/best"
+                ydl_opts["format"] = "best[height<=480]/best"
             else:
-                ydl_opts["format"] = "best[ext=mp4]/best"
+                ydl_opts["format"] = "best"
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:

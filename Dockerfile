@@ -1,8 +1,9 @@
 FROM python:3.11-slim
 
-# Instalar ffmpeg, nodejs (motor JS para descifrado de YouTube) y dependencias
+# Instalar ffmpeg, nodejs y dependencias
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ffmpeg curl ca-certificates nodejs && \
+    (which node || ln -s /usr/bin/nodejs /usr/bin/node) && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
